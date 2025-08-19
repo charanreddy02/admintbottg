@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Monetag BM Bot</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Telegram Web App script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+
+    <!-- Onboarding screen for new users -->
+    <div id="login-screen">
+        <div class="login-card card">
+            <h2>Welcome!</h2>
+            <p>Please provide your mobile number for withdrawal purposes. Your Telegram details are secured automatically.</p>
+            <form id="user-details-form">
+                <label for="mobile-number">Mobile Number</label>
+                <input type="tel" id="mobile-number" placeholder="Enter your mobile number" required>
+                <button type="submit" class="submit-btn">Save & Start Earning</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App Content (hidden by default) -->
+    <div id="app" class="hidden">
+        <header id="app-header">
+            <div class="header-user-info">
+                <img src="https://via.placeholder.com/40" alt="User Avatar" class="avatar profile-pic">
+                <div>
+                    <p class="username">User Name <i class="fas fa-gem diamond"></i></p>
+                    <p class="balance">Balance: 0 Rs</p>
+                </div>
+            </div>
+        </header>
+
+        <main id="app-main">
+            <!-- Home Page -->
+            <section id="home" class="page active">
+                 <!-- Content can be added here later if needed -->
+                 <div class="available-tasks card">
+                    <h2>Welcome!</h2>
+                    <p>Go to the "Ads Task" tab to start earning.</p>
+                </div>
+            </section>
+
+            <!-- Ads Task Page -->
+            <section id="ads-task" class="page">
+                <h2 class="page-title">Ads Task Overview</h2>
+                <div class="task-overview-grid">
+                    <div class="overview-item card">
+                        <p>Daily Tasks Completed</p>
+                        <p class="task-count" id="stats-daily-tasks">0</p>
+                        <div class="progress-bar-container"><div class="progress-bar"></div></div>
+                        <p class="task-limit">Limit: 1000 tasks/day</p>
+                    </div>
+                    <div class="overview-item card">
+                        <p>Hourly Tasks Completed</p>
+                        <p class="task-count" id="stats-hourly-tasks">0</p>
+                         <div class="progress-bar-container"><div class="progress-bar"></div></div>
+                        <p class="task-limit">Limit: 100 tasks/hour</p>
+                    </div>
+                    <div class="overview-item card">
+                        <p>Lifetime Completed Tasks</p>
+                        <p class="task-count" id="stats-lifetime-tasks">0</p>
+                    </div>
+                    <div class="overview-item card">
+                        <p>Total Earnings</p>
+                        <p class="task-count" id="stats-total-earnings">0</p>
+                    </div>
+                </div>
+                <button class="start-task-btn large-btn">Start Task</button>
+            </section>
+
+            <!-- Withdraw Page -->
+            <section id="withdraw" class="page">
+                 <div class="withdraw-funds card">
+                    <h2>Withdraw Funds <span class="balance-badge">0 Rs</span></h2>
+                    <label for="amount">Amount</label>
+                    <div class="input-group">
+                        <input type="number" id="withdraw-amount" placeholder="e.g., 300">
+                        <span>Rs</span>
+                    </div>
+                    <p class="minimum-text">Minimum: 250 Rs</p>
+
+                    <label for="withdrawal-address">Withdrawal Address</label>
+                    <input type="text" id="withdrawal-address" placeholder="Enter your UPI ID">
+                     <p class="address-hint">Enter the address for your selected payment method.</p>
+
+                    <label>Payment Method</label>
+                    <div class="payment-method selected">
+                        <span>UPI Account</span>
+                    </div>
+
+                    <button class="request-withdrawal-btn">Request Withdrawal</button>
+                </div>
+                 <div class="recent-withdrawals card">
+                    <h2>Recent Withdraws</h2>
+                     <p class="no-referrals">No withdrawal history found.</p>
+                </div>
+            </section>
+
+            <!-- Profile Page -->
+            <section id="profile" class="page">
+                 <div class="profile-header">
+                    <img src="https://via.placeholder.com/80" alt="User Avatar" class="profile-avatar profile-pic">
+                    <h2 class="profile-username username">User Name <i class="fas fa-gem diamond"></i></h2>
+                    <p class="join-date">Loading...</p>
+                </div>
+                <div class="your-statistics card">
+                    <h2>Your Statistics</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item color-1"><span><i class="fas fa-coins"></i> Total Earned</span><p id="profile-total-earned">0 Rs</p></div>
+                        <div class="stat-item color-2"><span><i class="fas fa-check-circle"></i> Tasks Done</span><p id="profile-tasks-done">0</p></div>
+                        <div class="stat-item color-3"><span><i class="fas fa-calendar-alt"></i> Current Streak</span><p>0 days</p></div>
+                        <div class="stat-item color-4"><span><i class="fas fa-users"></i> Referrals</span><p>0</p></div>
+                    </div>
+                </div>
+                 <div class="profile-actions">
+                    <button class="action-btn"><i class="fas fa-question-circle"></i> Help Center</button>
+                    <button class="action-btn logout" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Log Out</button>
+                </div>
+            </section>
+        </main>
+
+        <nav id="bottom-nav">
+            <a href="#home" class="nav-item active"><i class="fas fa-home"></i><span>Home</span></a>
+            <a href="#ads-task" class="nav-item"><i class="fas fa-tasks"></i><span>Ads Task</span></a>
+            <a href="#withdraw" class="nav-item"><i class="fas fa-wallet"></i><span>Withdraw</span></a>
+            <a href="#profile" class="nav-item"><i class="fas fa-user"></i><span>Profile</span></a>
+        </nav>
+    </div>
+
+    <!-- Success Popup -->
+    <div id="success-popup" class="popup-overlay hidden">
+        <div class="popup-content">
+            <span class="popup-close">&times;</span>
+            <h2><i class="fas fa-check-circle" style="color: #4CAF50;"></i> Success!</h2>
+            <p id="reward-message"></p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src='//libtl.com/sdk.js' data-zone='9724340' data-sdk='show_9724340'></script>
+    <script src="firebase-config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

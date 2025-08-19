@@ -1,0 +1,94 @@
+:root {
+    --background-color: #f7f8fc;
+    --card-background: #ffffff;
+    --text-color: #333;
+    --light-text-color: #7f8b9a;
+    --primary-gradient: linear-gradient(135deg, #4e54c8, #8f94fb);
+    --diamond-color: #00c6ff;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.hidden { display: none !important; }
+
+/* --- Login Screen --- */
+#login-screen { display: flex; justify-content: center; align-items: center; height: 100vh; padding: 1rem; box-sizing: border-box; }
+.login-card { width: 100%; max-width: 400px; text-align: center; }
+#user-details-form { text-align: left; margin-top: 1.5rem; }
+#user-details-form label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+#user-details-form input { width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 1rem; box-sizing: border-box; }
+.submit-btn { width: 100%; padding: 1rem; border: none; border-radius: 8px; background-image: var(--primary-gradient); color: white; font-size: 1rem; font-weight: 500; cursor: pointer; }
+
+/* --- Main App --- */
+#app { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; background-color: var(--background-color); }
+.card { background-color: var(--card-background); border-radius: 16px; padding: 1.2rem; margin-bottom: 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+
+/* Header */
+#app-header { padding: 1rem; background-color: var(--card-background); }
+.header-user-info { display: flex; align-items: center; }
+.avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 1rem; border: 2px solid #eee; }
+.username { font-weight: 500; margin: 0; font-size: 1.1rem; }
+.diamond { color: var(--diamond-color); }
+.balance { color: var(--light-text-color); margin: 2px 0 0; }
+
+#app-main { flex-grow: 1; padding: 1rem; overflow-y: auto; padding-bottom: 70px; }
+.page { display: none; }
+.page.active { display: block; }
+.page-title { text-align: center; font-size: 1.5rem; margin-bottom: 1.5rem; font-weight: 500; }
+
+/* Ads Task Page */
+.task-overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.overview-item { text-align: left; padding: 1rem; background-color: #f0f4ff; border: 1px solid #e0e8ff; }
+.overview-item p { margin: 0.2rem 0; color: #555; }
+.task-count { font-size: 2.2rem; font-weight: 700; margin: 0.5rem 0 !important; color: var(--text-color); }
+.task-limit { font-size: 0.8rem; color: var(--light-text-color); }
+.progress-bar-container { height: 4px; background-color: #e0e8ff; border-radius: 2px; margin: 0.8rem 0; }
+.progress-bar { height: 100%; width: 20%; background-color: #4e54c8; border-radius: 2px; }
+.start-task-btn { width: 100%; padding: 0.8rem; border: none; border-radius: 12px; background-image: var(--primary-gradient); color: white; font-weight: 500; cursor: pointer; font-size: 1.1rem; margin-top: 1.5rem; box-shadow: 0 4px 15px rgba(78, 84, 200, 0.4); }
+.large-btn { padding: 1rem; font-size: 1.2rem; }
+
+/* Withdraw Page */
+.withdraw-funds label { display: block; margin-top: 1rem; margin-bottom: 0.5rem; font-weight: 500; color: #555; }
+.input-group { display: flex; align-items: center; margin-bottom: 0.5rem; }
+.input-group input, #withdrawal-address { width: 100%; padding: 1rem; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
+.input-group span { margin-left: -45px; color: var(--light-text-color); }
+.minimum-text, .address-hint { font-size: 0.85rem; color: var(--light-text-color); }
+.payment-method { display: flex; align-items: center; padding: 1rem; border: 2px solid #4e54c8; border-radius: 12px; background-color: #f0f4ff; }
+.payment-method span { font-weight: 500; color: #4e54c8; }
+.request-withdrawal-btn { width: 100%; padding: 1rem; border: none; border-radius: 12px; background-image: var(--primary-gradient); color: white; font-weight: 500; cursor: pointer; font-size: 1.1rem; margin-top: 1.5rem; }
+.no-referrals { text-align: center; color: var(--light-text-color); padding: 1rem 0; }
+
+/* Profile Page */
+.profile-header { text-align: center; padding: 1rem 0; }
+.profile-avatar { width: 80px; height: 80px; border-radius: 50%; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+.profile-username { margin: 0.8rem 0 0.2rem; font-size: 1.4rem; }
+.join-date { color: var(--light-text-color); margin: 0; }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.stat-item { padding: 1rem; border-radius: 12px; }
+.stat-item span { font-size: 0.9rem; color: #555; display: flex; align-items: center; gap: 0.5rem; }
+.stat-item p { font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0 0; }
+.stat-item.color-1 { background-color: #fff4e5; color: #ff9800; }
+.stat-item.color-2 { background-color: #e8f5e9; color: #4caf50; }
+.stat-item.color-3 { background-color: #f3e5f5; color: #9c27b0; }
+.stat-item.color-4 { background-color: #e3f2fd; color: #2196f3; }
+.profile-actions { background: none; box-shadow: none; padding: 0; }
+.action-btn { display: flex; align-items: center; gap: 1rem; width: 100%; text-align: left; padding: 1rem; background: white; border: none; border-radius: 12px; margin-bottom: 0.8rem; font-size: 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+.action-btn.logout { color: #f44336; }
+
+/* --- Navigation --- */
+#bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; display: flex; justify-content: space-around; background-color: var(--card-background); box-shadow: 0 -2px 15px rgba(0,0,0,0.08); padding: 0.5rem 0; border-radius: 20px 20px 0 0; }
+.nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: var(--light-text-color); padding: 0.2rem 0.5rem; }
+.nav-item.active { color: #4e54c8; }
+.nav-item i { font-size: 1.5rem; margin-bottom: 0.2rem; }
+.nav-item span { font-size: 0.75rem; }
+
+/* --- Popup --- */
+.popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+.popup-content { background-color: white; padding: 2rem; border-radius: 12px; text-align: center; position: relative; width: 80%; max-width: 350px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+.popup-close { position: absolute; top: 10px; right: 15px; font-size: 1.5rem; font-weight: bold; cursor: pointer; color: #aaa; }

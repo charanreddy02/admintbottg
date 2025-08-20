@@ -1,0 +1,44 @@
+body { font-family: sans-serif; background-color: #f4f7f6; margin: 0; color: #333; }
+.hidden { display: none !important; }
+
+/* Login */
+#login-container { max-width: 350px; margin: 100px auto; padding: 2rem; background: white; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+#login-container h2 { text-align: center; margin-bottom: 1.5rem; }
+#login-container input { display: block; width: 100%; padding: 0.8rem; margin-bottom: 1rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+#login-container button { width: 100%; padding: 0.8rem; border: none; background: #007bff; color: white; border-radius: 4px; cursor: pointer; font-size: 1rem; }
+
+/* Panel Layout */
+#admin-panel { display: flex; flex-direction: column; height: 100vh; }
+header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: #343a40; color: white; }
+header h1 { margin: 0; font-size: 1.5rem; }
+nav { display: flex; background: #f8f9fa; border-bottom: 1px solid #dee2e6; }
+.tab-btn { padding: 1rem 1.5rem; border: none; background: none; cursor: pointer; font-size: 1rem; }
+.tab-btn.active { background: white; border-bottom: 3px solid #007bff; }
+main { flex-grow: 1; padding: 2rem; overflow-y: auto; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; background: white; }
+th, td { padding: 0.8rem; border: 1px solid #ddd; text-align: left; }
+th { background-color: #f2f2f2; }
+.action-btn { padding: 0.4rem 0.8rem; border: none; border-radius: 4px; color: white; cursor: pointer; margin-right: 0.5rem; }
+.approve-btn { background: #28a745; }
+.reject-btn { background: #dc3545; }
+.edit-btn { background: #ffc107; color: #333;}
+.ban-btn { background: #6c757d; }
+.unban-btn { background: #17a2b8; }
+.delete-btn { background: #dc3545; }
+
+/* Forms */
+.form-container { background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center; }
+.form-container input, .form-container select { padding: 0.8rem; border: 1px solid #ddd; border-radius: 4px; }
+.form-container button { padding: 0.8rem 1.2rem; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+
+/* Modals */
+#modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; }
+.modal { background: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 400px; }
+.modal h4 { margin-top: 0; }
+.modal input { width: 100%; padding: 0.8rem; box-sizing: border-box; margin: 1rem 0; }
+.modal button { padding: 0.6rem 1rem; cursor: pointer; border-radius: 4px; border: 1px solid #ddd; margin-right: 0.5rem; }
+.modal .close-modal-btn { background: #6c757d; color: white; }

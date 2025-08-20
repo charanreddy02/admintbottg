@@ -14,6 +14,11 @@
 body { font-family: 'Roboto', sans-serif; margin: 0; background-color: var(--background-color); color: var(--text-color); -webkit-tap-highlight-color: transparent; }
 .hidden { display: none !important; }
 
+/* --- Main Loader (ADDED) --- */
+.loader-container { display: flex; justify-content: center; align-items: center; height: 100vh; }
+.loader { border: 4px solid #f3f3f3; border-top: 4px solid #4e54c8; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
 /* --- Login Screen --- */
 #login-screen { display: flex; justify-content: center; align-items: center; height: 100vh; padding: 1rem; box-sizing: border-box; }
 .login-card { width: 100%; max-width: 400px; text-align: center; }
@@ -42,37 +47,35 @@ body { font-family: 'Roboto', sans-serif; margin: 0; background-color: var(--bac
 /* --- Daily Check-in Card --- */
 .daily-checkin { background-image: var(--secondary-gradient); color: white; }
 .daily-checkin h2, .daily-checkin p { color: white; }
-.checkin-days { display: flex; justify-content: space-between; gap: 0.5rem; margin: 1.2rem 0; } /* ADDED GAP */
+.checkin-days { display: flex; justify-content: space-between; gap: 0.5rem; margin: 1.2rem 0; }
 .day-item { text-align: center; padding: 0.8rem 0.5rem; border-radius: 12px; flex-grow: 1; background-color: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); font-size: 0.9rem; }
 .day-item.claimed i { color: #4caf50; }
 .claim-btn { width: 100%; padding: 0.8rem; border: none; border-radius: 12px; background-color: white; color: #8A2BE2; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 1rem; }
 .claim-btn:disabled { background-color: rgba(255,255,255,0.8); color: #aaa; cursor: not-allowed; }
 
 /* --- Dynamic & Home Tasks --- */
-.dynamic-tasks h2, .available-tasks-home h2 { font-size: 1.2rem; margin-top: 0; }
-.task-item-home { display: flex; align-items: center; justify-content: space-between; }
+.available-tasks-home h2 { font-size: 1.2rem; margin-top: 0; }
+.task-item-home, .dynamic-task-item { display: flex; align-items: center; justify-content: space-between; }
 .task-item-home h3, .dynamic-task-item h3 { margin: 0; font-size: 1rem; }
 .task-item-home p, .dynamic-task-item p { margin: 4px 0 0; color: var(--light-text-color); font-size: 0.9rem; }
 .reward-badge { background-color: #fff4e5; color: #ff9800; padding: 0.5rem 0.8rem; border-radius: 8px; font-weight: 700; }
-.dynamic-task-item { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 0; border-bottom: 1px solid #f0f0f0; }
-.dynamic-task-item:last-child { border-bottom: none; }
-.complete-task-btn { padding: 0.5rem 1rem; border: none; border-radius: 8px; background-image: var(--primary-gradient); color: white; cursor: pointer; }
-.complete-task-btn:disabled { background-image: none; background-color: #e0e0e0; cursor: not-allowed; }
+#dynamic-tasks-list .task-item-home { padding: 0.8rem 0; border-bottom: 1px solid #f0f0f0; }
+#dynamic-tasks-list .task-item-home:last-child { border-bottom: none; }
+.start-task-btn { width: 100%; padding: 0.8rem; border: none; border-radius: 12px; background-image: var(--primary-gradient); color: white; font-weight: 500; cursor: pointer; font-size: 1.1rem; margin-top: 1.5rem; box-shadow: 0 4px 15px rgba(78, 84, 200, 0.4); }
+.large-btn { padding: 1rem; font-size: 1.2rem; }
 
 /* Ads Task Page */
 .task-overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .overview-item { text-align: left; padding: 1rem; }
 .overview-item p { margin: 0.2rem 0; color: #555; }
 .task-count { font-size: 2.2rem; font-weight: 700; margin: 0.5rem 0 !important; color: var(--text-color); }
-.start-task-btn { width: 100%; padding: 0.8rem; border: none; border-radius: 12px; background-image: var(--primary-gradient); color: white; font-weight: 500; cursor: pointer; font-size: 1.1rem; margin-top: 1.5rem; box-shadow: 0 4px 15px rgba(78, 84, 200, 0.4); }
-.large-btn { padding: 1rem; font-size: 1.2rem; }
 
 /* Withdraw Page */
 .withdraw-funds label { display: block; margin-top: 1rem; margin-bottom: 0.5rem; font-weight: 500; color: #555; }
 #withdraw-amount, #withdrawal-address { width: 100%; padding: 1rem; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
 .input-group { display: flex; align-items: center; margin-bottom: 0.5rem; }
 .input-group span { margin-left: -45px; color: var(--light-text-color); }
-.minimum-text { font-size: 0.85rem; color: var(--light-text-color); }
+.minimum-text, .address-hint { font-size: 0.85rem; color: var(--light-text-color); }
 .payment-method { display: flex; align-items: center; padding: 1rem; border: 2px solid #4e54c8; border-radius: 12px; background-color: #f0f4ff; }
 .payment-method span { font-weight: 500; color: #4e54c8; }
 .request-withdrawal-btn { width: 100%; padding: 1rem; border: none; border-radius: 12px; background-image: var(--primary-gradient); color: white; font-weight: 500; cursor: pointer; font-size: 1.1rem; margin-top: 1.5rem; }
@@ -95,6 +98,7 @@ body { font-family: 'Roboto', sans-serif; margin: 0; background-color: var(--bac
 .stat-item p { font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0 0; }
 .stat-item.color-1 { background-color: #fff4e5; color: #ff9800; }
 .stat-item.color-2 { background-color: #e8f5e9; color: #4caf50; }
+.profile-actions { background: none; box-shadow: none; padding: 0; }
 .action-btn { display: flex; align-items: center; gap: 1rem; width: 100%; text-align: left; padding: 1rem; background: white; border: none; border-radius: 12px; margin-bottom: 0.8rem; font-size: 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
 .action-btn.logout { color: #f44336; }
 

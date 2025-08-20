@@ -4,6 +4,7 @@
     --text-color: #333;
     --light-text-color: #7f8b9a;
     --primary-gradient: linear-gradient(135deg, #4e54c8, #8f94fb);
+    --secondary-gradient: linear-gradient(135deg, #8A2BE2, #FF69B4); /* For Daily Checkin */
     --diamond-color: #00c6ff;
 }
 
@@ -42,21 +43,34 @@ body {
 .page.active { display: block; }
 .page-title { text-align: center; font-size: 1.5rem; margin-bottom: 1.5rem; font-weight: 500; }
 
+/* --- Daily Check-in Card (ADDED) --- */
+.daily-checkin { background-image: var(--secondary-gradient); color: white; }
+.daily-checkin h2, .daily-checkin p { color: white; }
+.checkin-days { display: flex; justify-content: space-around; margin: 1.2rem 0; }
+.day-item { text-align: center; padding: 0.8rem 0.5rem; border-radius: 12px; width: 55px; background-color: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); font-size: 0.9rem; }
+.day-item.claimed i { color: #4caf50; }
+.claim-btn { width: 100%; padding: 0.8rem; border: none; border-radius: 12px; background-color: white; color: #8A2BE2; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 1rem; }
+.claim-btn:disabled { background-color: rgba(255,255,255,0.8); color: #aaa; cursor: not-allowed; }
+
+/* --- Home Page Available Tasks (UPDATED) --- */
+.available-tasks-home h2 { font-size: 1.2rem; }
+.task-item-home { display: flex; align-items: center; justify-content: space-between; }
+.task-item-home h3 { margin: 0; }
+.task-item-home p { margin: 4px 0 0; color: var(--light-text-color); }
+.reward-badge { background-color: #fff4e5; color: #ff9800; padding: 0.5rem 0.8rem; border-radius: 8px; font-weight: 700; }
+
 /* Ads Task Page */
 .task-overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.overview-item { text-align: left; padding: 1rem; background-color: #f0f4ff; border: 1px solid #e0e8ff; }
+.overview-item { text-align: left; padding: 1rem; }
 .overview-item p { margin: 0.2rem 0; color: #555; }
 .task-count { font-size: 2.2rem; font-weight: 700; margin: 0.5rem 0 !important; color: var(--text-color); }
-.task-limit { font-size: 0.8rem; color: var(--light-text-color); }
-.progress-bar-container { height: 4px; background-color: #e0e8ff; border-radius: 2px; margin: 0.8rem 0; }
-.progress-bar { height: 100%; width: 20%; background-color: #4e54c8; border-radius: 2px; }
 .start-task-btn { width: 100%; padding: 0.8rem; border: none; border-radius: 12px; background-image: var(--primary-gradient); color: white; font-weight: 500; cursor: pointer; font-size: 1.1rem; margin-top: 1.5rem; box-shadow: 0 4px 15px rgba(78, 84, 200, 0.4); }
 .large-btn { padding: 1rem; font-size: 1.2rem; }
 
 /* Withdraw Page */
 .withdraw-funds label { display: block; margin-top: 1rem; margin-bottom: 0.5rem; font-weight: 500; color: #555; }
 .input-group { display: flex; align-items: center; margin-bottom: 0.5rem; }
-.input-group input, #withdrawal-address { width: 100%; padding: 1rem; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
+#withdraw-amount, #withdrawal-address { width: 100%; padding: 1rem; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
 .input-group span { margin-left: -45px; color: var(--light-text-color); }
 .minimum-text, .address-hint { font-size: 0.85rem; color: var(--light-text-color); }
 .payment-method { display: flex; align-items: center; padding: 1rem; border: 2px solid #4e54c8; border-radius: 12px; background-color: #f0f4ff; }
@@ -75,8 +89,6 @@ body {
 .stat-item p { font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0 0; }
 .stat-item.color-1 { background-color: #fff4e5; color: #ff9800; }
 .stat-item.color-2 { background-color: #e8f5e9; color: #4caf50; }
-.stat-item.color-3 { background-color: #f3e5f5; color: #9c27b0; }
-.stat-item.color-4 { background-color: #e3f2fd; color: #2196f3; }
 .profile-actions { background: none; box-shadow: none; padding: 0; }
 .action-btn { display: flex; align-items: center; gap: 1rem; width: 100%; text-align: left; padding: 1rem; background: white; border: none; border-radius: 12px; margin-bottom: 0.8rem; font-size: 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
 .action-btn.logout { color: #f44336; }

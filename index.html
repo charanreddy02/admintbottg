@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Monetag BM Bot</title>
+    <title>Admint Bot</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -11,8 +11,11 @@
 </head>
 <body>
 
-    <!-- Onboarding screen -->
-    <div id="login-screen">
+    <!-- Main Loader for app startup -->
+    <div id="main-loader" class="loader-container"><div class="loader"></div></div>
+
+    <!-- Onboarding screen (initially hidden) -->
+    <div id="login-screen" class="hidden">
         <div class="login-card card">
             <h2>Welcome!</h2>
             <p>Please provide your mobile number for withdrawal purposes.</p>
@@ -24,7 +27,7 @@
         </div>
     </div>
 
-    <!-- Main App Content -->
+    <!-- Main App Content (initially hidden) -->
     <div id="app" class="hidden">
         <header id="app-header">
             <div class="header-user-info">
@@ -53,7 +56,7 @@
                 </div>
 
                 <!-- DYNAMIC TASKS CONTAINER -->
-                <div class="dynamic-tasks card">
+                <div class="available-tasks-home card">
                     <h2>Daily Tasks</h2>
                     <div id="dynamic-tasks-list">
                         <!-- Tasks from Firebase will be loaded here -->
@@ -65,11 +68,10 @@
             <section id="ads-task" class="page">
                 <h2 class="page-title">Ads Task Overview</h2>
                 <div class="task-overview-grid">
-                    <div class="overview-item card"><p>Lifetime Tasks</p><p class="task-count" id="stats-lifetime-tasks">0</p></div>
-                    <div class="overview-item card"><p>Total Earnings</p><p class="task-count" id="stats-total-earnings">0</p></div>
+                    <div class="overview-item card"><p>Lifetime Ad Tasks</p><p class="task-count" id="stats-lifetime-tasks">0</p></div>
+                    <div class="overview-item card"><p>Total Ad Earnings</p><p class="task-count" id="stats-total-earnings">0</p></div>
                 </div>
                 
-                <!-- Available Ad Task Card ADDED -->
                 <div class="available-tasks-home card">
                     <h2>Watch Ads & Earn</h2>
                     <div class="task-item-home">
@@ -99,7 +101,6 @@
                     <button class="request-withdrawal-btn">Request Withdrawal</button>
                 </div>
                 
-                <!-- WITHDRAWAL HISTORY CONTAINER -->
                 <div class="recent-withdrawals card">
                     <h2>Recent Withdraws</h2>
                     <div id="withdrawal-history-list">
@@ -119,7 +120,7 @@
                     <h2>Your Statistics</h2>
                     <div class="stats-grid">
                         <div class="stat-item color-1"><span><i class="fas fa-coins"></i> Total Earned</span><p id="profile-total-earned">0 Rs</p></div>
-                        <div class="stat-item color-2"><span><i class="fas fa-check-circle"></i> Tasks Done</span><p id="profile-tasks-done">0</p></div>
+                        <div class="stat-item color-2"><span><i class="fas fa-check-circle"></i> Total Tasks Done</span><p id="profile-tasks-done">0</p></div>
                     </div>
                 </div>
                 <div class="profile-actions">

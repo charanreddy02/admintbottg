@@ -11,11 +11,11 @@
 </head>
 <body>
 
-    <!-- Onboarding screen for new users -->
+    <!-- Onboarding screen -->
     <div id="login-screen">
         <div class="login-card card">
             <h2>Welcome!</h2>
-            <p>Please provide your mobile number for withdrawal purposes. Your Telegram details are secured automatically.</p>
+            <p>Please provide your mobile number for withdrawal purposes.</p>
             <form id="user-details-form">
                 <label for="mobile-number">Mobile Number</label>
                 <input type="tel" id="mobile-number" placeholder="Enter your mobile number" required>
@@ -24,7 +24,7 @@
         </div>
     </div>
 
-    <!-- Main App Content (hidden by default) -->
+    <!-- Main App Content -->
     <div id="app" class="hidden">
         <header id="app-header">
             <div class="header-user-info">
@@ -39,35 +39,25 @@
         <main id="app-main">
             <!-- Home Page -->
             <section id="home" class="page active">
-                <!-- Daily Check-in Bonus Card ADDED -->
                 <div class="daily-checkin card">
                     <h2>Daily Check-in Bonus</h2>
-                    <p>Claim your daily reward and keep your streak!</p>
+                    <p>Claim your daily reward!</p>
                     <div class="checkin-days">
-                        <div class="day-item claimed">
-                            <i class="fas fa-check-circle"></i>Day 1
-                        </div>
+                        <div class="day-item"><i class="fas fa-check-circle"></i>Day 1</div>
                         <div class="day-item"><i class="fas fa-lock"></i>Day 2</div>
                         <div class="day-item"><i class="fas fa-lock"></i>Day 3</div>
                         <div class="day-item"><i class="fas fa-lock"></i>Day 4</div>
                         <div class="day-item"><i class="fas fa-lock"></i>Day 5</div>
                     </div>
-                    <button id="claim-bonus-btn" class="claim-btn">
-                        <i class="fas fa-gift"></i> <span>Claim Reward</span>
-                    </button>
+                    <button id="claim-bonus-btn" class="claim-btn"><i class="fas fa-gift"></i> <span>Claim Reward</span></button>
                 </div>
 
-                <!-- Available Tasks Card UPDATED -->
-                <div class="available-tasks-home card">
-                    <h2>Available Tasks</h2>
-                    <div class="task-item-home">
-                        <div>
-                            <h3>Watch Ads</h3>
-                            <p>Earn by watching short video ads</p>
-                        </div>
-                        <span class="reward-badge">100 / Ad</span>
+                <!-- DYNAMIC TASKS CONTAINER -->
+                <div class="dynamic-tasks card">
+                    <h2>Daily Tasks</h2>
+                    <div id="dynamic-tasks-list">
+                        <!-- Tasks from Firebase will be loaded here -->
                     </div>
-                    <button id="navigate-to-ads-task-btn" class="start-task-btn">Start Task</button>
                 </div>
             </section>
 
@@ -75,10 +65,22 @@
             <section id="ads-task" class="page">
                 <h2 class="page-title">Ads Task Overview</h2>
                 <div class="task-overview-grid">
-                    <div class="overview-item card"><p>Lifetime Completed Tasks</p><p class="task-count" id="stats-lifetime-tasks">0</p></div>
+                    <div class="overview-item card"><p>Lifetime Tasks</p><p class="task-count" id="stats-lifetime-tasks">0</p></div>
                     <div class="overview-item card"><p>Total Earnings</p><p class="task-count" id="stats-total-earnings">0</p></div>
                 </div>
-                <button class="start-task-btn large-btn">Start Task</button>
+                
+                <!-- Available Ad Task Card ADDED -->
+                <div class="available-tasks-home card">
+                    <h2>Watch Ads & Earn</h2>
+                    <div class="task-item-home">
+                        <div>
+                            <h3>Standard Ad Reward</h3>
+                            <p>Earn by watching short video ads</p>
+                        </div>
+                        <span class="reward-badge">1₹-5₹ / Ad</span>
+                    </div>
+                    <button class="start-task-btn large-btn">Start Ad Task</button>
+                </div>
             </section>
 
             <!-- Withdraw Page -->
@@ -92,14 +94,17 @@
                     <p class="minimum-text">Minimum: 250 Rs</p>
                     <label for="withdrawal-address">Withdrawal Address</label>
                     <input type="text" id="withdrawal-address" placeholder="Enter your UPI ID">
-                    <p class="address-hint">Enter the address for your selected payment method.</p>
                     <label>Payment Method</label>
                     <div class="payment-method selected"><span>UPI Account</span></div>
                     <button class="request-withdrawal-btn">Request Withdrawal</button>
                 </div>
+                
+                <!-- WITHDRAWAL HISTORY CONTAINER -->
                 <div class="recent-withdrawals card">
                     <h2>Recent Withdraws</h2>
-                    <p class="no-referrals">No withdrawal history found.</p>
+                    <div id="withdrawal-history-list">
+                        <!-- Withdrawal history from Firebase will be loaded here -->
+                    </div>
                 </div>
             </section>
 
@@ -131,7 +136,7 @@
         </nav>
     </div>
 
-    <!-- Success Popup -->
+    <!-- Popups & Scripts -->
     <div id="success-popup" class="popup-overlay hidden">
         <div class="popup-content">
             <span class="popup-close">&times;</span>
@@ -139,8 +144,6 @@
             <p id="reward-message"></p>
         </div>
     </div>
-
-    <!-- Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src='//libtl.com/sdk.js' data-zone='9724340' data-sdk='show_9724340'></script>

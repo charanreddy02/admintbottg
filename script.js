@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     tg.ready(); tg.expand();
 
+    const mainLoader = document.getElementById('main-loader');
     const loginScreen = document.getElementById('login-screen');
     const appScreen = document.getElementById('app');
     const userDetailsForm = document.getElementById('user-details-form');
@@ -14,19 +15,38 @@ document.addEventListener('DOMContentLoaded', function() {
     function init() {
         const userRef = database.ref('users/' + userId);
         userRef.once('value', (snapshot) => {
+            mainLoader.classList.add('hidden'); // Hide loader after check
             if (snapshot.exists() && snapshot.val().mobile) {
+                // User exists, check for ban and proceed
+                if (snapshot.val().isBanned) {
+                    document.body.innerHTML = `
+                        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; text-align: center; padding: 2rem; font-family: sans-serif;">
+                            <h2 style="color: #f44336;">Account Suspended</h2>
+                            <p>For assistance, please contact customer support:</p>
+                            <p><strong>Support: @BinaryMindsetTg</strong></p>
+                        </div>
+                    `;
+                    return;
+                }
+                userRef.update({ lastSeen: new Date().toISOString() });
                 initializeAppView(snapshot.val());
             } else {
+                // User is new or hasn't provided mobile
                 showLoginScreen();
             }
         }).catch(handleFirebaseError);
     }
 
-    function handleFirebaseError(error) { console.error("Firebase error:", error); document.body.innerHTML = "<h1>Error connecting to the database. Please try again.</h1>"; }
-    function showLoginScreen() { loginScreen.style.display = 'flex'; appScreen.classList.add('hidden'); }
+    function handleFirebaseError(error) { console.error("Firebase error:", error); document.body.innerHTML = "<h1>Error connecting to the database.</h1>"; }
+    
+    function showLoginScreen() {
+        mainLoader.classList.add('hidden');
+        loginScreen.classList.remove('hidden');
+        appScreen.classList.add('hidden');
+    }
 
     function initializeAppView(userData) {
-        loginScreen.style.display = 'none';
+        loginScreen.classList.add('hidden');
         appScreen.classList.remove('hidden');
         const userDisplayName = userData.name || `${telegramUser.first_name} ${telegramUser.last_name || ''}`.trim();
         document.querySelectorAll('.username').forEach(el => { el.innerHTML = `${userDisplayName} <i class="fas fa-gem diamond"></i>`; });
@@ -40,15 +60,28 @@ document.addEventListener('DOMContentLoaded', function() {
         event.preventDefault();
         const mobileNumber = document.getElementById('mobile-number').value;
         if (!mobileNumber.trim()) { alert('Please enter your mobile number.'); return; }
-        const newUserData = {
-            name: `${telegramUser.first_name} ${telegramUser.last_name || ''}`.trim(),
-            mobile: mobileNumber, telegramUsername: telegramUser.username || 'N/A', telegramId: userId,
-            balance: 0, totalEarned: 0, tasksCompleted: 0,
-            joinedDate: new Date().toISOString(),
-            lastClaimTimestamp: 0,
-            completedTasks: {}
-        };
-        database.ref('users/' + userId).set(newUserData).then(() => initializeAppView(newUserData)).catch(handleFirebaseError);
+        
+        // **CRITICAL FIX**: This logic prevents account resets.
+        const userRef = database.ref('users/' + userId);
+        userRef.once('value', (snapshot) => {
+            if (snapshot.exists()) {
+                // User already has data, just update the mobile number
+                userRef.update({ mobile: mobileNumber }).then(() => {
+                    initializeAppView({ ...snapshot.val(), mobile: mobileNumber });
+                }).catch(handleFirebaseError);
+            } else {
+                // This is a completely new user, create their full profile
+                const newUserData = {
+                    name: `${telegramUser.first_name} ${telegramUser.last_name || ''}`.trim(),
+                    mobile: mobileNumber, telegramUsername: telegramUser.username || 'N/A', telegramId: userId,
+                    balance: 0, totalEarned: 0, adTasksCompleted: 0, dynamicTasksCompleted: 0,
+                    joinedDate: new Date().toISOString(),
+                    lastClaimTimestamp: 0,
+                    completedTasks: {}
+                };
+                userRef.set(newUserData).then(() => initializeAppView(newUserData)).catch(handleFirebaseError);
+            }
+        });
     });
     
     document.getElementById('logout-btn').addEventListener('click', () => {
@@ -60,45 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Replace the old init() function in your USER app's script.js with this new one
-function init() {
-    const loggedInUserKey = localStorage.getItem('telegramUserKey');
-    if (loggedInUserKey) {
-        const userRef = database.ref('users/' + loggedInUserKey);
-        userRef.once('value', (snapshot) => {
-            if (snapshot.exists()) {
-                
-                // --- START: NEW CODE IS INTEGRATED HERE ---
-
-                // 1. Check if the user is banned
-                if (snapshot.val().isBanned) {
-                    document.body.innerHTML = `
-                        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; text-align: center; padding: 2rem; font-family: sans-serif;">
-                            <h2 style="color: #f44336;">Account Suspended</h2>
-                            <p>Your account has been suspended due to a policy violation.</p>
-                            <p>For assistance, please contact customer support:</p>
-                            <p><strong>Support: @BinaryMindsetTg</strong></p>
-                        </div>
-                    `;
-                    return; // Stop the app from loading
-                }
-
-                // 2. Update the user's "last seen" timestamp for stats
-                userRef.update({ lastSeen: new Date().toISOString() });
-
-                // --- END: NEW CODE ---
-
-                initializeAppView(snapshot.val()); // This line was already here
-
-            } else {
-                localStorage.removeItem('telegramUserKey');
-                showLoginScreen();
-            }
-        }).catch(handleFirebaseError);
-    } else {
-        showLoginScreen();
-    }
-}
+    init();
 });
 
 function initializeCoreAppLogic(userData) {
@@ -113,7 +108,7 @@ function initializeCoreAppLogic(userData) {
         profileTasksDone: document.getElementById('profile-tasks-done'),
         navItems: document.querySelectorAll('.nav-item'),
         pages: document.querySelectorAll('.page'),
-        startTaskButtons: document.querySelectorAll('.start-task-btn'),
+        adTaskBtn: document.querySelector('#ads-task .start-task-btn'),
         requestWithdrawalBtn: document.querySelector('.request-withdrawal-btn'),
         successPopup: document.getElementById('success-popup'),
         rewardMessage: document.getElementById('reward-message'),
@@ -124,11 +119,12 @@ function initializeCoreAppLogic(userData) {
     };
 
     function updateAllStatsUI() {
+        const totalTasks = (currentUserData.adTasksCompleted || 0) + (currentUserData.dynamicTasksCompleted || 0);
         elements.balance.forEach(el => el.textContent = `${currentUserData.balance} Rs`);
-        elements.statsLifetimeTasks.textContent = currentUserData.tasksCompleted;
-        elements.statsTotalEarnings.textContent = currentUserData.totalEarned;
-        elements.profileTasksDone.textContent = currentUserData.tasksCompleted;
-        elements.profileTotalEarned.textContent = `${currentUserData.totalEarned} Rs`;
+        elements.statsLifetimeTasks.textContent = currentUserData.adTasksCompleted || 0;
+        elements.statsTotalEarnings.textContent = currentUserData.totalEarned || 0;
+        elements.profileTasksDone.textContent = totalTasks;
+        elements.profileTotalEarned.textContent = `${currentUserData.totalEarned || 0} Rs`;
     }
 
     function showSuccessPopup(message) { elements.rewardMessage.textContent = message; elements.successPopup.classList.remove('hidden'); }
@@ -138,25 +134,15 @@ function initializeCoreAppLogic(userData) {
         const lastClaim = currentUserData.lastClaimTimestamp || 0;
         const now = new Date();
         const lastClaimDate = new Date(lastClaim);
-        const isSameDay = now.getFullYear() === lastClaimDate.getFullYear() && now.getMonth() === lastClaimDate.getMonth() && now.getDate() === lastClaimDate.getDate();
-
-        if (!isSameDay) {
-            elements.claimBonusBtn.disabled = false;
-            elements.claimBonusBtn.querySelector('span').textContent = "Claim Reward";
-        } else {
-            elements.claimBonusBtn.disabled = true;
-            elements.claimBonusBtn.querySelector('span').textContent = "Claimed Today";
-        }
+        const isSameDay = now.toDateString() === lastClaimDate.toDateString();
+        elements.claimBonusBtn.disabled = isSameDay;
+        elements.claimBonusBtn.querySelector('span').textContent = isSameDay ? "Claimed Today" : "Claim Reward";
     }
-
+    
     function renderWithdrawalHistory() {
-        const query = database.ref('withdrawals').orderByChild('userId').equalTo(userId);
-        query.on('value', snapshot => {
+        database.ref('withdrawals').orderByChild('userId').equalTo(userId).on('value', snapshot => {
             elements.withdrawalHistoryList.innerHTML = '';
-            if (!snapshot.exists()) {
-                elements.withdrawalHistoryList.innerHTML = '<p class="no-referrals">No withdrawal history found.</p>';
-                return;
-            }
+            if (!snapshot.exists()) { elements.withdrawalHistoryList.innerHTML = '<p class="no-referrals">No withdrawal history found.</p>'; return; }
             snapshot.forEach(childSnapshot => {
                 const data = childSnapshot.val();
                 const item = document.createElement('div');
@@ -175,28 +161,22 @@ function initializeCoreAppLogic(userData) {
     }
     
     function renderDynamicTasks() {
-        const tasksRef = database.ref('dailyTasks');
-        tasksRef.on('value', snapshot => {
+        database.ref('dailyTasks').on('value', snapshot => {
             elements.dynamicTasksList.innerHTML = '';
-            if (!snapshot.exists()) {
-                elements.dynamicTasksList.innerHTML = '<p class="no-referrals">No new tasks available today.</p>';
-                return;
-            }
+            if (!snapshot.exists()) { elements.dynamicTasksList.innerHTML = '<p class="no-referrals">No new tasks available today.</p>'; return; }
             const completed = currentUserData.completedTasks || {};
             snapshot.forEach(childSnapshot => {
                 const taskId = childSnapshot.key;
                 const task = childSnapshot.val();
+                if (!task.active) return; // Skip inactive tasks
                 const isCompleted = completed[taskId];
                 
                 const taskItem = document.createElement('div');
-                taskItem.className = 'dynamic-task-item';
+                taskItem.className = 'task-item-home';
                 taskItem.innerHTML = `
-                    <div>
-                        <h3>${task.title}</h3>
-                        <p>${task.description}</p>
-                    </div>
-                    <button class="complete-task-btn" data-task-id="${taskId}" data-reward="${task.reward}" ${isCompleted ? 'disabled' : ''}>
-                        ${isCompleted ? 'Completed' : `+${task.reward} Rs`}
+                    <div><h3>${task.title}</h3><p>${task.description}</p></div>
+                    <button class="start-task-btn dynamic-task-btn" data-task-id="${taskId}" data-reward="${task.reward}" ${isCompleted ? 'disabled' : ''}>
+                        ${isCompleted ? 'Completed' : `+ ${task.reward} ₹`}
                     </button>
                 `;
                 elements.dynamicTasksList.appendChild(taskItem);
@@ -204,7 +184,6 @@ function initializeCoreAppLogic(userData) {
         });
     }
 
-    // --- Event Listeners ---
     elements.navItems.forEach(item => {
         item.addEventListener('click', function(e) {
             e.preventDefault();
@@ -226,58 +205,52 @@ function initializeCoreAppLogic(userData) {
             totalEarned: currentUserData.totalEarned,
             lastClaimTimestamp: currentUserData.lastClaimTimestamp
         });
-        updateAllStatsUI();
-        handleDailyCheckin();
-        showSuccessPopup(`You claimed a daily bonus of ${reward} Rs!`);
+        updateAllStatsUI(); handleDailyCheckin(); showSuccessPopup(`You claimed a daily bonus of ${reward} Rs!`);
     });
     
-    elements.startTaskButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            if (typeof show_9724340 === 'function') {
-                show_9724340().then(() => {
-                    const reward = Math.floor(Math.random() * 5) + 1; // 1-5 Rs
-                    currentUserData.balance += reward;
-                    currentUserData.totalEarned += reward;
-                    currentUserData.tasksCompleted++;
-                    database.ref('users/' + userId).update({
-                        balance: currentUserData.balance,
-                        totalEarned: currentUserData.totalEarned,
-                        tasksCompleted: currentUserData.tasksCompleted
-                    });
-                    updateAllStatsUI();
-                    showSuccessPopup(`You earned ${reward} Rs for watching an ad!`);
-                }).catch(error => console.error("Ad error:", error));
-            } else { alert('Ad service is not available.'); }
-        });
+    elements.adTaskBtn.addEventListener('click', function() {
+        if (typeof show_9724340 === 'function') {
+            show_9724340().then(() => {
+                const reward = Math.floor(Math.random() * 5) + 1; // 1-5 Rs
+                currentUserData.balance += reward;
+                currentUserData.totalEarned += reward;
+                currentUserData.adTasksCompleted = (currentUserData.adTasksCompleted || 0) + 1;
+                database.ref('users/' + userId).update({
+                    balance: currentUserData.balance,
+                    totalEarned: currentUserData.totalEarned,
+                    adTasksCompleted: currentUserData.adTasksCompleted
+                });
+                updateAllStatsUI(); showSuccessPopup(`You earned ${reward} Rs for watching an ad!`);
+            }).catch(error => console.error("Ad error:", error));
+        } else { alert('Ad service is not available.'); }
     });
 
     elements.dynamicTasksList.addEventListener('click', function(e) {
-        if (e.target.classList.contains('complete-task-btn')) {
+        if (e.target.classList.contains('dynamic-task-btn')) {
             const button = e.target;
             const taskId = button.dataset.taskId;
             const reward = parseInt(button.dataset.reward, 10);
 
             // Here you might show a different type of ad or confirmation
-            // For now, we use the same ad logic
-            show_9724340().then(() => {
-                currentUserData.balance += reward;
-                currentUserData.totalEarned += reward;
-                currentUserData.tasksCompleted++;
-                if (!currentUserData.completedTasks) currentUserData.completedTasks = {};
-                currentUserData.completedTasks[taskId] = true;
+            // For now, we assume the task is just to click the button
+            button.disabled = true; // Prevent multiple clicks
+            
+            currentUserData.balance += reward;
+            currentUserData.totalEarned += reward;
+            currentUserData.dynamicTasksCompleted = (currentUserData.dynamicTasksCompleted || 0) + 1;
+            if (!currentUserData.completedTasks) currentUserData.completedTasks = {};
+            currentUserData.completedTasks[taskId] = true;
 
-                database.ref('users/' + userId).update({
-                    balance: currentUserData.balance,
-                    totalEarned: currentUserData.totalEarned,
-                    tasksCompleted: currentUserData.tasksCompleted,
-                    [`completedTasks/${taskId}`]: true
-                });
-                
-                button.textContent = 'Completed';
-                button.disabled = true;
-                updateAllStatsUI();
-                showSuccessPopup(`Task complete! You earned ${reward} Rs!`);
+            database.ref('users/' + userId).update({
+                balance: currentUserData.balance,
+                totalEarned: currentUserData.totalEarned,
+                dynamicTasksCompleted: currentUserData.dynamicTasksCompleted,
+                [`completedTasks/${taskId}`]: true
             });
+            
+            button.textContent = 'Completed';
+            updateAllStatsUI();
+            showSuccessPopup(`Task complete! You earned ${reward} Rs!`);
         }
     });
     
@@ -309,10 +282,8 @@ function initializeCoreAppLogic(userData) {
 
     elements.popupCloseBtn.addEventListener('click', hideSuccessPopup);
 
-    // Initial Setup
     updateAllStatsUI();
     handleDailyCheckin();
     renderWithdrawalHistory();
     renderDynamicTasks();
 }
-

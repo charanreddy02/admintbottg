@@ -1,243 +1,191 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Firebase & Auth Setup ---
     const auth = firebase.auth();
     const db = firebase.database();
 
-    // --- DOM Elements ---
-    const loginContainer = document.getElementById('login-container');
-    const adminPanel = document.getElementById('admin-panel');
-    const loginBtn = document.getElementById('login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const adminEmailSpan = document.getElementById('admin-email');
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
-    
-    // Global state
-    let currentAdminRole = null;
-    let withdrawalToReject = null;
-    let userToEdit = null;
-    
+    const elements = {
+        mainLoader: document.getElementById('main-loader'),
+        loginContainer: document.getElementById('login-container'),
+        adminPanel: document.getElementById('admin-panel'),
+        loginBtn: document.getElementById('login-btn'),
+        logoutBtn: document.getElementById('logout-btn'),
+        tabBtns: document.querySelectorAll('.tab-btn'),
+        tabContents: document.querySelectorAll('.tab-content'),
+        statTotalUsers: document.getElementById('stat-total-users'),
+        statActiveToday: document.getElementById('stat-active-today'),
+        withdrawalsContainer: document.getElementById('withdrawals-table-container'),
+        usersContainer: document.getElementById('users-table-container'),
+        tasksContainer: document.getElementById('tasks-table-container'),
+        userSearchInput: document.getElementById('user-search-input'),
+        addTaskBtn: document.getElementById('add-task-btn'),
+        modalBackdrop: document.getElementById('modal-backdrop'),
+        confirmationModal: document.getElementById('confirmation-modal'),
+        confirmActionBtn: document.getElementById('confirm-action-btn'),
+        toastContainer: document.getElementById('toast-container')
+    };
+
+    let confirmCallback = null;
+
     // --- AUTHENTICATION ---
     auth.onAuthStateChanged(user => {
+        elements.mainLoader.classList.add('hidden');
         if (user) {
             db.ref('admins/' + user.uid).once('value', snapshot => {
-                if (snapshot.exists()) {
-                    currentAdminRole = snapshot.val().role;
-                    showPanel(user.email);
-                } else {
-                    alert("You do not have permission to access this panel.");
-                    auth.signOut();
-                }
+                if (snapshot.exists()) { showPanel(); } 
+                else { alert("Permission denied."); auth.signOut(); }
             });
         } else {
             showLogin();
         }
     });
 
-    loginBtn.addEventListener('click', () => {
+    elements.loginBtn.addEventListener('click', () => {
         const email = document.getElementById('login-email').value;
         const password = document.getElementById('login-password').value;
-        auth.signInWithEmailAndPassword(email, password).catch(error => alert(error.message));
+        toggleLoader(elements.loginBtn, true);
+        auth.signInWithEmailAndPassword(email, password)
+            .then(() => showToast("Login Successful!"))
+            .catch(error => alert(error.message))
+            .finally(() => toggleLoader(elements.loginBtn, false));
     });
 
-    logoutBtn.addEventListener('click', () => auth.signOut());
+    elements.logoutBtn.addEventListener('click', () => auth.signOut());
 
-    function showPanel(email) {
-        loginContainer.classList.add('hidden');
-        adminPanel.classList.remove('hidden');
-        adminEmailSpan.textContent = email;
-        loadWithdrawals();
-        
-        // Role-based access
-        if (currentAdminRole !== 'superadmin') {
-            document.getElementById('manage-admins-tab').classList.add('hidden');
-        } else {
-            document.getElementById('manage-admins-tab').classList.remove('hidden');
-        }
+    function showPanel() {
+        elements.loginContainer.classList.add('hidden');
+        elements.adminPanel.classList.remove('hidden');
+        loadDashboardStats();
     }
     
     function showLogin() {
-        loginContainer.classList.remove('hidden');
-        adminPanel.classList.add('hidden');
+        elements.loginContainer.classList.remove('hidden');
+        elements.adminPanel.classList.add('hidden');
     }
 
-    // --- TAB NAVIGATION ---
-    tabBtns.forEach(btn => {
+    // --- TAB NAVIGATION & DATA LOADING ---
+    elements.tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            tabBtns.forEach(b => b.classList.remove('active'));
+            elements.tabBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             const tabId = btn.dataset.tab;
-            tabContents.forEach(content => {
+            elements.tabContents.forEach(content => {
                 content.id === tabId + '-tab' ? content.classList.add('active') : content.classList.remove('active');
             });
-            // Load data for the activated tab
+            document.querySelector('header h1').textContent = btn.querySelector('span').textContent;
+            
+            if (tabId === 'dashboard') loadDashboardStats();
             if (tabId === 'users') loadUsers();
             if (tabId === 'tasks') loadTasks();
             if (tabId === 'withdrawals') loadWithdrawals();
         });
     });
 
-    // --- WITHDRAWALS LOGIC ---
-    function loadWithdrawals() {
-        const tableBody = document.getElementById('withdrawals-table').querySelector('tbody');
-        db.ref('withdrawals').orderByChild('status').equalTo('pending').on('value', snapshot => {
-            tableBody.innerHTML = '';
-            snapshot.forEach(childSnapshot => {
-                const id = childSnapshot.key;
-                const data = childSnapshot.val();
-                const row = `
-                    <tr>
-                        <td>${data.userName} (${data.userId})</td>
-                        <td>${data.amount} Rs</td>
-                        <td>${data.address}</td>
-                        <td>${new Date(data.timestamp).toLocaleString()}</td>
-                        <td>
-                            <button class="action-btn approve-btn" data-id="${id}">Approve</button>
-                            <button class="action-btn reject-btn" data-id="${id}">Reject</button>
-                        </td>
-                    </tr>
-                `;
-                tableBody.innerHTML += row;
-            });
-        });
-    }
-
-    document.getElementById('withdrawals-table').addEventListener('click', e => {
-        const id = e.target.dataset.id;
-        if (e.target.classList.contains('approve-btn')) {
-            db.ref('withdrawals/' + id).update({ status: 'success' });
-        }
-        if (e.target.classList.contains('reject-btn')) {
-            withdrawalToReject = id;
-            openModal('reject-modal');
-        }
-    });
-
-    document.getElementById('confirm-reject-btn').addEventListener('click', () => {
-        const remarks = document.getElementById('reject-remarks').value;
-        db.ref('withdrawals/' + withdrawalToReject).update({ status: 'rejected', remarks: remarks || 'N/A' });
-        closeModals();
-    });
-
-    // --- USERS LOGIC ---
-    function loadUsers() {
-        const tableBody = document.getElementById('users-table').querySelector('tbody');
+    // --- DASHBOARD ---
+    function loadDashboardStats() {
         db.ref('users').on('value', snapshot => {
-            tableBody.innerHTML = '';
-            snapshot.forEach(childSnapshot => {
-                const id = childSnapshot.key;
-                const data = childSnapshot.val();
-                const banBtn = data.isBanned 
-                    ? `<button class="action-btn unban-btn" data-id="${id}" data-banned="false">Unban</button>`
-                    : `<button class="action-btn ban-btn" data-id="${id}" data-banned="true">Ban</button>`;
-                const row = `
-                    <tr>
-                        <td>${data.name}</td>
-                        <td>${data.mobile}</td>
-                        <td>${data.balance} Rs</td>
-                        <td>${data.isBanned ? 'Yes' : 'No'}</td>
-                        <td>
-                            <button class="action-btn edit-btn" data-id="${id}">Edit</button>
-                            ${banBtn}
-                        </td>
-                    </tr>
-                `;
-                tableBody.innerHTML += row;
-            });
-        });
-    }
+            const users = snapshot.val();
+            const totalUsers = users ? Object.keys(users).length : 0;
+            elements.statTotalUsers.textContent = totalUsers;
 
-    document.getElementById('users-table').addEventListener('click', e => {
-        const id = e.target.dataset.id;
-        if (e.target.classList.contains('ban-btn') || e.target.classList.contains('unban-btn')) {
-            const isBanned = e.target.dataset.banned === 'true';
-            db.ref('users/' + id).update({ isBanned: isBanned });
-        }
-        if (e.target.classList.contains('edit-btn')) {
-            userToEdit = id;
-            db.ref('users/' + id).once('value', snapshot => {
-                const data = snapshot.val();
-                document.getElementById('edit-user-name').textContent = data.name;
-                document.getElementById('edit-user-balance').value = data.balance;
-                openModal('edit-user-modal');
-            });
-        }
-    });
-    
-    document.getElementById('confirm-edit-user-btn').addEventListener('click', () => {
-        const newBalance = document.getElementById('edit-user-balance').value;
-        db.ref('users/' + userToEdit).update({ balance: parseInt(newBalance, 10) });
-        closeModals();
-    });
-    
-    // --- TASKS LOGIC ---
-    function loadTasks() {
-        const tableBody = document.getElementById('tasks-table').querySelector('tbody');
-        db.ref('dailyTasks').on('value', snapshot => {
-            tableBody.innerHTML = '';
-            snapshot.forEach(childSnapshot => {
-                const id = childSnapshot.key;
-                const data = childSnapshot.val();
-                const row = `
-                    <tr>
-                        <td>${data.title}</td>
-                        <td>${data.description}</td>
-                        <td>${data.reward} Rs</td>
-                        <td><button class="action-btn delete-btn" data-id="${id}">Delete</button></td>
-                    </tr>
-                `;
-                tableBody.innerHTML += row;
-            });
-        });
-    }
-
-    document.getElementById('add-task-btn').addEventListener('click', () => {
-        const title = document.getElementById('task-title').value;
-        const description = document.getElementById('task-desc').value;
-        const reward = parseInt(document.getElementById('task-reward').value, 10);
-        if (title && description && reward) {
-            db.ref('dailyTasks').push({ title, description, reward, active: true });
-            document.getElementById('task-title').value = '';
-            document.getElementById('task-desc').value = '';
-            document.getElementById('task-reward').value = '';
-        } else {
-            alert('Please fill all task fields.');
-        }
-    });
-
-    document.getElementById('tasks-table').addEventListener('click', e => {
-        if (e.target.classList.contains('delete-btn')) {
-            if (confirm('Are you sure you want to delete this task?')) {
-                db.ref('dailyTasks/' + e.target.dataset.id).remove();
+            let activeToday = 0;
+            const now = new Date();
+            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+            if (users) {
+                Object.values(users).forEach(user => {
+                    if (user.lastSeen && new Date(user.lastSeen).getTime() >= startOfToday) {
+                        activeToday++;
+                    }
+                });
             }
-        }
-    });
+            elements.statActiveToday.textContent = activeToday;
+        });
+    }
+
+    // --- USERS ---
+    function loadUsers() {
+        db.ref('users').on('value', snapshot => {
+            let html = `<table><thead><tr><th>User</th><th>Info</th><th>Actions</th></tr></thead><tbody>`;
+            if (snapshot.exists()) {
+                snapshot.forEach(childSnapshot => {
+                    const id = childSnapshot.key;
+                    const data = childSnapshot.val();
+                    const banBtn = data.isBanned 
+                        ? `<button class="action-btn unban-btn" data-id="${id}" data-banned="false">Unban</button>`
+                        : `<button class="action-btn ban-btn" data-id="${id}" data-banned="true">Ban</button>`;
+                    html += `
+                        <tr data-search-term="${(data.name + id + data.mobile).toLowerCase()}">
+                            <td><strong>${data.name}</strong><br><small>${id}</small></td>
+                            <td>
+                                <strong>Balance:</strong> ${data.balance} Rs<br>
+                                <strong>Earned:</strong> ${data.totalEarned} Rs<br>
+                                <strong>Tasks:</strong> ${data.tasksCompleted}
+                            </td>
+                            <td>${banBtn}</td>
+                        </tr>
+                    `;
+                });
+            }
+            html += `</tbody></table>`;
+            elements.usersContainer.innerHTML = html;
+        });
+    }
     
-     // --- ADMIN MANAGEMENT (Superadmin only) ---
-    document.getElementById('add-admin-btn').addEventListener('click', () => {
-        const email = document.getElementById('new-admin-email').value;
-        const password = document.getElementById('new-admin-password').value;
-        const role = document.getElementById('new-admin-role').value;
-
-        // This is a simplified creation process. A secondary Firebase instance is needed to do this without logging out.
-        // For now, we will alert the user about the process.
-        alert("Admin creation requires a more complex setup (secondary Firebase app). For now, please add new admins manually via the Firebase Authentication console and add their role in the Realtime Database, just like you did for your own account.");
+    elements.userSearchInput.addEventListener('input', e => {
+        const searchTerm = e.target.value.toLowerCase();
+        document.querySelectorAll('#users-table-container tr').forEach(row => {
+            if (row.dataset.searchTerm) {
+                row.style.display = row.dataset.searchTerm.includes(searchTerm) ? '' : 'none';
+            }
+        });
     });
 
+    // --- GENERIC ACTION HANDLER ---
+    document.addEventListener('click', e => {
+        const id = e.target.dataset.id;
+        if (!id) return;
 
-    // --- MODAL HELPERS ---
-    const modalBackdrop = document.getElementById('modal-backdrop');
-    function openModal(modalId) {
-        modalBackdrop.classList.remove('hidden');
-        document.getElementById(modalId).classList.remove('hidden');
+        if (e.target.matches('.ban-btn, .unban-btn')) {
+            const isBanned = e.target.dataset.banned === 'true';
+            const actionText = isBanned ? 'ban' : 'unban';
+            showConfirmation(`Are you sure you want to ${actionText} this user?`, () => {
+                db.ref('users/' + id).update({ isBanned: isBanned })
+                    .then(() => showToast(`User has been ${actionText}ned.`));
+            });
+        }
+        // Add more generic handlers here (delete, approve, reject etc.)
+    });
+
+    // --- HELPERS ---
+    function toggleLoader(button, show) {
+        button.querySelector('.btn-text').classList.toggle('hidden', show);
+        button.querySelector('.btn-loader').classList.toggle('hidden', !show);
+        button.disabled = show;
     }
-    function closeModals() {
-        modalBackdrop.classList.add('hidden');
-        modalBackdrop.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+
+    function showToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        elements.toastContainer.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
     }
-    modalBackdrop.addEventListener('click', e => {
-        if (e.target === modalBackdrop || e.target.classList.contains('close-modal-btn')) {
-            closeModals();
+
+    function showConfirmation(message, callback) {
+        document.getElementById('confirmation-message').textContent = message;
+        elements.modalBackdrop.classList.remove('hidden');
+        confirmCallback = callback;
+    }
+    
+    elements.confirmActionBtn.addEventListener('click', () => {
+        if (confirmCallback) confirmCallback();
+        elements.modalBackdrop.classList.add('hidden');
+    });
+
+    elements.modalBackdrop.addEventListener('click', e => {
+        if (e.target === elements.modalBackdrop || e.target.classList.contains('close-modal-btn')) {
+            elements.modalBackdrop.classList.add('hidden');
         }
     });
+
+    // Initial Load
+    showLogin();
 });

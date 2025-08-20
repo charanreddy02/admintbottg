@@ -1,28 +1,20 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // --- Initialize Telegram Web App ---
     const tg = window.Telegram.WebApp;
     if (!tg || !tg.initDataUnsafe?.user) {
-        document.body.innerHTML = "<h1>Error: Please open this app inside Telegram.</h1>";
-        return;
+        document.body.innerHTML = "<h1>Error: Please open this app inside Telegram.</h1>"; return;
     }
-    
     tg.ready();
     tg.expand();
 
-    // --- DOM Elements ---
     const loginScreen = document.getElementById('login-screen');
     const appScreen = document.getElementById('app');
     const userDetailsForm = document.getElementById('user-details-form');
     const usernameDisplayElements = document.querySelectorAll('.username');
     const profilePicElements = document.querySelectorAll('.profile-pic');
-    const profileIdElement = document.getElementById('profile-user-id');
     const logoutBtn = document.getElementById('logout-btn');
-
-    // --- App State from Telegram ---
     const telegramUser = tg.initDataUnsafe.user;
     const userId = telegramUser.id.toString();
 
-    // --- App Initialization ---
     function init() {
         const userRef = database.ref('users/' + userId);
         userRef.once('value', (snapshot) => {
@@ -39,7 +31,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.innerHTML = "<h1>Error connecting to the database. Please try again.</h1>";
     }
 
-    // --- View Functions ---
     function showLoginScreen() {
         loginScreen.style.display = 'flex';
         appScreen.classList.add('hidden');
@@ -48,75 +39,52 @@ document.addEventListener('DOMContentLoaded', function() {
     function initializeAppView(userData) {
         loginScreen.style.display = 'none';
         appScreen.classList.remove('hidden');
-
         const userDisplayName = userData.name || `${telegramUser.first_name} ${telegramUser.last_name || ''}`.trim();
-
         usernameDisplayElements.forEach(el => {
             el.innerHTML = `${userDisplayName} <i class="fas fa-gem diamond"></i>`;
         });
-
         const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userDisplayName)}&background=random&color=fff&size=128`;
         profilePicElements.forEach(img => img.src = avatarUrl);
-
         document.querySelector('.join-date').textContent = `Joined: ${new Date(userData.joinedDate).toLocaleDateString()}`;
-
         initializeCoreAppLogic(userData);
     }
 
-    // --- Event Handlers ---
     userDetailsForm.addEventListener('submit', function(event) {
         event.preventDefault();
         const mobileNumber = document.getElementById('mobile-number').value;
-        if (!mobileNumber.trim()) {
-            alert('Please enter your mobile number.'); return;
-        }
+        if (!mobileNumber.trim()) { alert('Please enter your mobile number.'); return; }
 
         const newUserData = {
             name: `${telegramUser.first_name} ${telegramUser.last_name || ''}`.trim(),
-            mobile: mobileNumber,
-            telegramUsername: telegramUser.username || 'N/A',
-            telegramId: userId,
-            balance: 0,
-            totalEarned: 0,
-            tasksCompleted: 0,
-            joinedDate: new Date().toISOString()
+            mobile: mobileNumber, telegramUsername: telegramUser.username || 'N/A', telegramId: userId,
+            balance: 0, totalEarned: 0, tasksCompleted: 0,
+            joinedDate: new Date().toISOString(),
+            lastClaimTimestamp: 0 // Initialize daily claim timestamp
         };
-
-        database.ref('users/' + userId).set(newUserData).then(() => {
-            initializeAppView(newUserData);
-        }).catch(handleFirebaseError);
+        database.ref('users/' + userId).set(newUserData).then(() => initializeAppView(newUserData)).catch(handleFirebaseError);
     });
     
     logoutBtn.addEventListener('click', () => {
-        if (confirm("Are you sure you want to log out? You will need to enter your mobile number again.")) {
-            // A non-destructive logout: we just remove the mobile number
-            // which forces the login screen on next open.
+        if (confirm("Are you sure you want to log out?")) {
             database.ref('users/' + userId + '/mobile').remove();
             alert("You have been logged out.");
             location.reload();
         }
     });
 
-    // --- Start the application ---
     init();
 });
 
-
-// --- Main App Logic ---
 function initializeCoreAppLogic(userData) {
     const userId = userData.telegramId;
-    let currentUserData = { ...userData }; // Create a local copy to manage state
+    let currentUserData = { ...userData };
 
-    // --- DOM Elements for Stats ---
+    // --- DOM Elements ---
     const balanceElements = document.querySelectorAll('.balance, .balance-badge');
-    const statsDailyTasks = document.getElementById('stats-daily-tasks');
-    const statsHourlyTasks = document.getElementById('stats-hourly-tasks'); // Placeholder
     const statsLifetimeTasks = document.getElementById('stats-lifetime-tasks');
     const statsTotalEarnings = document.getElementById('stats-total-earnings');
     const profileTotalEarned = document.getElementById('profile-total-earned');
     const profileTasksDone = document.getElementById('profile-tasks-done');
-    
-    // --- Other DOM Elements ---
     const navItems = document.querySelectorAll('.nav-item');
     const pages = document.querySelectorAll('.page');
     const startTaskButtons = document.querySelectorAll('.start-task-btn');
@@ -124,12 +92,12 @@ function initializeCoreAppLogic(userData) {
     const successPopup = document.getElementById('success-popup');
     const rewardMessage = document.getElementById('reward-message');
     const popupCloseBtn = document.querySelector('.popup-close');
+    const homeStartTaskBtn = document.getElementById('navigate-to-ads-task-btn');
+    const claimBonusBtn = document.getElementById('claim-bonus-btn');
 
     // --- Core Functions ---
     function updateAllStatsUI() {
-        balanceElements.forEach(el => el.textContent = `Balance: ${currentUserData.balance} Rs`);
-        statsDailyTasks.textContent = currentUserData.tasksCompleted; // Simplified for now
-        statsHourlyTasks.textContent = currentUserData.tasksCompleted; // Placeholder
+        balanceElements.forEach(el => el.textContent = `${currentUserData.balance} Rs`);
         statsLifetimeTasks.textContent = currentUserData.tasksCompleted;
         statsTotalEarnings.textContent = currentUserData.totalEarned;
         profileTasksDone.textContent = currentUserData.tasksCompleted;
@@ -145,6 +113,38 @@ function initializeCoreAppLogic(userData) {
         successPopup.classList.add('hidden');
     }
 
+    // --- Daily Check-in Logic ---
+    function handleDailyCheckin() {
+        const lastClaim = currentUserData.lastClaimTimestamp || 0;
+        const now = Date.now();
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+        
+        if (now - lastClaim > twentyFourHours) {
+            claimBonusBtn.disabled = false;
+            claimBonusBtn.querySelector('span').textContent = "Claim Reward";
+        } else {
+            claimBonusBtn.disabled = true;
+            claimBonusBtn.querySelector('span').textContent = "Come Back Tomorrow";
+        }
+    }
+    
+    claimBonusBtn.addEventListener('click', () => {
+        const reward = Math.floor(Math.random() * (10 - 5 + 1)) + 5; // Random reward 5-10
+        currentUserData.balance += reward;
+        currentUserData.totalEarned += reward;
+        currentUserData.lastClaimTimestamp = Date.now();
+
+        database.ref('users/' + userId).update({
+            balance: currentUserData.balance,
+            totalEarned: currentUserData.totalEarned,
+            lastClaimTimestamp: currentUserData.lastClaimTimestamp
+        });
+
+        updateAllStatsUI();
+        handleDailyCheckin();
+        showSuccessPopup(`You claimed a daily bonus of ${reward} Rs!`);
+    });
+
     // --- Event Listeners ---
     navItems.forEach(item => {
         item.addEventListener('click', function(e) {
@@ -157,18 +157,23 @@ function initializeCoreAppLogic(userData) {
         });
     });
 
+    homeStartTaskBtn.addEventListener('click', () => {
+        // Navigate to Ads Task page by simulating a click on the nav item
+        document.querySelector('a[href="#ads-task"]').click();
+    });
+
     startTaskButtons.forEach(button => {
+        // Exclude the home page button which has its own listener
+        if (button.id === 'navigate-to-ads-task-btn') return;
+
         button.addEventListener('click', function() {
             if (typeof show_9724340 === 'function') {
                 show_9724340().then(() => {
                     const reward = Math.floor(Math.random() * 4) + 1;
-                    
-                    // Update local state
                     currentUserData.balance += reward;
                     currentUserData.totalEarned += reward;
                     currentUserData.tasksCompleted++;
                     
-                    // Update Firebase
                     database.ref('users/' + userId).update({
                         balance: currentUserData.balance,
                         totalEarned: currentUserData.totalEarned,
@@ -176,11 +181,9 @@ function initializeCoreAppLogic(userData) {
                     });
                     
                     updateAllStatsUI();
-                    showSuccessPopup(`You earned ${reward} Rs! Your new balance is ${currentUserData.balance} Rs.`);
+                    showSuccessPopup(`You earned ${reward} Rs! New balance is ${currentUserData.balance} Rs.`);
                 }).catch(error => console.error("Ad error:", error));
-            } else {
-                alert('Ad service is not available.');
-            }
+            } else { alert('Ad service is not available.'); }
         });
     });
     
@@ -188,26 +191,25 @@ function initializeCoreAppLogic(userData) {
         const amount = parseInt(document.getElementById('withdraw-amount').value, 10);
         const address = document.getElementById('withdrawal-address').value;
 
-        if (!amount || !address.trim()) {
-            alert("Please enter a valid amount and UPI address."); return;
-        }
-        if (amount < 250) {
-            alert("Minimum withdrawal amount is 250 Rs."); return;
-        }
-        if (amount > currentUserData.balance) {
-            alert("You do not have enough balance to withdraw this amount."); return;
-        }
+        if (!amount || !address.trim()) { alert("Please enter a valid amount and UPI address."); return; }
+        if (amount < 250) { alert("Minimum withdrawal amount is 250 Rs."); return; }
+        if (amount > currentUserData.balance) { alert("Insufficient balance."); return; }
+
+        const newBalance = currentUserData.balance - amount; // Calculate new balance first
 
         const withdrawalRequest = {
-            userId: userId,
-            userName: currentUserData.name,
-            amount: amount,
-            address: address,
-            status: 'pending',
-            timestamp: new Date().toISOString()
+            userId: userId, userName: currentUserData.name, amount: amount,
+            address: address, status: 'pending', timestamp: new Date().toISOString()
         };
 
-        database.ref('withdrawals').push(withdrawalRequest).then(() => {
+        // Push request AND update balance in one go
+        const updates = {};
+        updates['/withdrawals/' + database.ref().child('withdrawals').push().key] = withdrawalRequest;
+        updates['/users/' + userId + '/balance'] = newBalance;
+
+        database.ref().update(updates).then(() => {
+            currentUserData.balance = newBalance; // Update local state
+            updateAllStatsUI(); // Refresh UI
             showSuccessPopup("Your withdrawal request has been submitted successfully!");
             document.getElementById('withdraw-amount').value = '';
             document.getElementById('withdrawal-address').value = '';
@@ -216,6 +218,7 @@ function initializeCoreAppLogic(userData) {
 
     popupCloseBtn.addEventListener('click', hideSuccessPopup);
 
-    // Initial UI Setup on app load
+    // Initial UI Setup
     updateAllStatsUI();
+    handleDailyCheckin();
 }

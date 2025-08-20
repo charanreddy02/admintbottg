@@ -60,7 +60,45 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    init();
+    // Replace the old init() function in your USER app's script.js with this new one
+function init() {
+    const loggedInUserKey = localStorage.getItem('telegramUserKey');
+    if (loggedInUserKey) {
+        const userRef = database.ref('users/' + loggedInUserKey);
+        userRef.once('value', (snapshot) => {
+            if (snapshot.exists()) {
+                
+                // --- START: NEW CODE IS INTEGRATED HERE ---
+
+                // 1. Check if the user is banned
+                if (snapshot.val().isBanned) {
+                    document.body.innerHTML = `
+                        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; text-align: center; padding: 2rem; font-family: sans-serif;">
+                            <h2 style="color: #f44336;">Account Suspended</h2>
+                            <p>Your account has been suspended due to a policy violation.</p>
+                            <p>For assistance, please contact customer support:</p>
+                            <p><strong>Support: @BinaryMindsetTg</strong></p>
+                        </div>
+                    `;
+                    return; // Stop the app from loading
+                }
+
+                // 2. Update the user's "last seen" timestamp for stats
+                userRef.update({ lastSeen: new Date().toISOString() });
+
+                // --- END: NEW CODE ---
+
+                initializeAppView(snapshot.val()); // This line was already here
+
+            } else {
+                localStorage.removeItem('telegramUserKey');
+                showLoginScreen();
+            }
+        }).catch(handleFirebaseError);
+    } else {
+        showLoginScreen();
+    }
+}
 });
 
 function initializeCoreAppLogic(userData) {
@@ -277,3 +315,4 @@ function initializeCoreAppLogic(userData) {
     renderWithdrawalHistory();
     renderDynamicTasks();
 }
+
